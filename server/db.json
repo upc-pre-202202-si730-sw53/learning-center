@@ -23,6 +23,18 @@
       "title": "Vue Unleashed",
       "description": "Vue at its best.",
       "published": true
+    },
+    {
+      "id": 5,
+      "title": "PrimeVue Tutorials",
+      "description": "The best tutorials about PrimeVue",
+      "published": false
+    },
+    {
+      "id": 6,
+      "title": "VueRouter to the Limit",
+      "description": "Amazing tutorials about In-App Navigation",
+      "published": false
     }
   ]
 }
