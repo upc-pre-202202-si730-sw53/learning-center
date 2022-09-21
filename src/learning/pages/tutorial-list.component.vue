@@ -5,10 +5,12 @@
       <pv-toolbar class="mb-4">
         <template #start>
           <pv-button label="New" icon="pi pi-plus" class="p-button-success mr-2" @click="openNew"></pv-button>
-          <pv-button label="Delete" icon="pi pi-trash" class="p-button-danger" @click="confirmDeleteSelected" :disabled="!selectedTutorials || !selectedTutorials.length"></pv-button>
+          <pv-button label="Delete" icon="pi pi-trash" class="p-button-danger" @click="confirmDeleteSelected"
+                     :disabled="!selectedTutorials || !selectedTutorials.length"></pv-button>
         </template>
         <template #end>
-          <pv-button label="Export" icon="pi pi-download" class="p-button-help" @click="exportToCSV($event)"></pv-button>
+          <pv-button label="Export" icon="pi pi-download" class="p-button-help"
+                     @click="exportToCSV($event)"></pv-button>
         </template>
       </pv-toolbar>
 
@@ -44,23 +46,123 @@
         </pv-column>
         <pv-column :exportable="false" style="min-width: 8rem">
           <template #body="slotProps">
-            <pv-button icon="pi pi-pencil" class="p-button-text p-button-rounded" @click="editTutorial(slotProps.data)"></pv-button>
-            <pv-button icon="pi pi-trash" class="p-button-text p-button-rounded" @click="confirmDeleteTutorial(slotProps.data)"></pv-button>
+            <pv-button icon="pi pi-pencil" class="p-button-text p-button-rounded"
+                       @click="editTutorial(slotProps.data)"></pv-button>
+            <pv-button icon="pi pi-trash" class="p-button-text p-button-rounded"
+                       @click="confirmDeleteTutorial(slotProps.data)"></pv-button>
           </template>
         </pv-column>
       </pv-data-table>
-
+      <!-- Add/Edit Tutorial Dialog -->
+      <pv-dialog
+          v-model:visible="tutorialDialog"
+          :style="{ width: '450px'}"
+          header="Tutorial Information"
+          :modal="true"
+          class="p-fluid">
+        <div class="field mt-3">
+          <span class="p-float-label">
+            <pv-input-text type="text"
+                           v-model.trim="tutorial.title"
+                           required="true"
+                           autofocus
+                           :class="{'p-invalid': submitted && !tutorial.title}"/>
+            <label for="title">Title</label>
+            <small class="p-error" v-if="submitted && !tutorial.title">
+              Title is required
+            </small>
+          </span>
+        </div>
+        <div class="field">
+          <span class="p-float-label">
+            <pv-textarea id="description"
+                         v-model="tutorial.description"
+                         required="false"
+                         rows="2"
+                         cols="20"/>
+            <label for="description">Description</label>
+          </span>
+        </div>
+        <div class="field">
+          <pv-dropdown id="published"
+                       v-model="tutorial.status"
+                       :options="statuses"
+                       optionLabel="label"
+                       placeholder="Select a Status">
+            <template #value="slotProps">
+              <div v-if="slotProps.value && slotProps.value.value">
+                <span :class="'tutorial-badge status-' + slotProps.value.value">
+                  {{ slotProps.value.label }}
+                </span>
+              </div>
+              <div v-else-if="slotProps.value && !slotProps.value.value">
+                <span :class="'tutorial-badge status-' + slotProps.value.toLowerCase()">
+                  {{ slotProps.value }}
+                </span>
+              </div>
+              <span v-else>
+                {{ slotProps.placeholder }}
+              </span>
+            </template>
+          </pv-dropdown>
+        </div>
+        <template #footer>
+          <pv-button :label="'Cancel'.toUpperCase()" icon="pi pi-times" class="p-button-text" @click="hideDialog"/>
+          <pv-button :label="'Save'.toUpperCase()" icon="pi pi-check" class="p-button-text" @click="saveTutorial"/>
+        </template>
+      </pv-dialog>
+      <!-- Delete Tutorial Confirmation Dialog -->
+      <pv-dialog v-model:visible="deleteTutorialDialog" :style="{width: '450px'}"
+                 header="Confirm" :modal="true">
+        <div class="confirmation-content">
+          <i class="pi pi-exclamation-triangle mr-3" style="font-size: 2rem"/>
+          <span v-if="tutorial">
+            Are you sure you want to delete <b>{{ tutorial.title }}</b>?
+          </span>
+        </div>
+        <template #footer>
+          <pv-button :label="'No'.toUpperCase()"
+                     icon="pi pi-times"
+                     class="p-button-text"
+                     @click="deleteTutorialDialog = false"/>
+          <pv-button :label="'Yes'.toUpperCase()"
+                     icon="pi pi-check"
+                     class="p-button-text"
+                     @click="deleteTutorial"/>
+        </template>
+      </pv-dialog>
+      <!-- Delete Selected Tutorials Confirmation Dialog -->
+      <pv-dialog
+        v-model:visible="deleteTutorialsDialog"
+        :style="{ width: '450px'}"
+        header="Confirm"
+        :modal="true">
+        <div class="confirmation-content">
+          <i class="pi pi-exclamation-triangle mr-3"
+             style="font-size: 2rem"/>
+          <span v-if="selectedTutorials">Are you sure you want to delete the selected tutorials?</span>
+        </div>
+        <template #footer>
+          <pv-button :label="'No'.toUpperCase()"
+                     icon="pi pi-times"
+                     class="p-button-text"
+                     @click="deleteTutorialsDialog = false"/>
+          <pv-button :label="'Yes'.toUpperCase()"
+                     icon="pi pi-check"
+                     class="p-button-text"
+                     @click="deleteSelectedTutorials"/>
+        </template>
+      </pv-dialog>
     </div>
   </div>
 </template>
 
 <script>
-import { FilterMatchMode } from "primevue/api";
-import { TutorialsApiService } from "@/learning/services/tutorials-api.service";
+import {FilterMatchMode} from "primevue/api";
+import {TutorialsApiService} from "@/learning/services/tutorials-api.service";
 
 export default {
   name: "tutorial-list.component",
-  components: {PvColumn, PvInputText, PvDataTable, PvButton, PvToolbar},
   data() {
     return {
       tutorials: [],
@@ -153,10 +255,10 @@ export default {
     },
 
     editTutorial(tutorial) {
-        console.log(tutorial);
-        this.tutorial = { ...tutorial };
-        console.log(this.tutorial);
-        this.tutorialDialog = true;
+      console.log(tutorial);
+      this.tutorial = {...tutorial};
+      console.log(this.tutorial);
+      this.tutorialDialog = true;
     },
 
     confirmDeleteTutorial(tutorial) {
@@ -193,35 +295,24 @@ export default {
     },
 
     initFilters() {
-      this.filters = { global: { value: null, matchMode: FilterMatchMode.CONTAINS } };
+      this.filters = {global: {value: null, matchMode: FilterMatchMode.CONTAINS}};
     }
 
   }
 }
 </script>
 
-<style lang="scss" scoped>
-  .table-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    @media screen and (max-width: 960px){
-      align-items: start;
-    }
-  }
+<style scoped>
+.table-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
 
-  .confirmation-content {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
+.confirmation-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
 
-  @media screen and (max-width: 960px){
-    ::v-deep(.p-toolbar) {
-      flex-wrap: wrap;
-      .p-button {
-        margin-bottom: 0.25rem;
-      }
-    }
-  }
 </style>
