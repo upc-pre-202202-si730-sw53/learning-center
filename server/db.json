@@ -36,5 +36,12 @@
       "description": "Amazing tutorials about In-App Navigation",
       "published": false
     }
+  ],
+  "users": [
+    {
+      "email": "john.doe@gmail.com",
+      "password": "$2a$10$BFMXp8UrIKK6onr8Lfhi8uc5ucTYs8llRm7yNdC9xgHc8YUw4IXTG",
+      "id": 1
+    }
   ]
 }
